@@ -420,10 +420,10 @@
       <section class="panel" aria-labelledby="equity-title">
         <div class="section-head">
           <h2 id="equity-title">Equity curve</h2>
-          <span class="hint">Cumulative return</span>
+          <span class="hint">Cumulative P&amp;L (USDC)</span>
         </div>
         <div class="chart-box">
-          <canvas id="equity" role="img" aria-label="Cumulative return percent over time"></canvas>
+          <canvas id="equity" role="img" aria-label="Cumulative profit and loss in USDC over time"></canvas>
         </div>
         <p id="equity-empty" class="empty" hidden>No equity data yet.</p>
         <p id="equity-meta" class="meta"></p>
@@ -456,7 +456,7 @@
         <div id="paper"></div>
       </section>
     </main>
-    <footer>Public page. Trade results are shown in USDC, percent, and R.</footer>
+    <footer>Public page. Trade results are shown in USDC and R only. No account balance or percent-of-account figures are published.</footer>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
@@ -665,7 +665,7 @@
       const profit = blankSide();
       const loss = blankSide();
       (trades || []).forEach(function (row) {
-        const pct = num(row && row.pnl_pct);
+        const pct = null;
         const r = num(row && row.r);
         const usd = num(row && row.pnl_usd);
         const sign = outcomeSign(r, pct, usd);
@@ -681,8 +681,7 @@
       (rows || []).forEach(function (row) {
         const r = num(row && row.unrealized_r);
         const usd = num(row && row.unrealized_usd);
-        const risk = num(row && row.risk_pct);
-        const pct = r !== null && risk !== null ? r * risk : null;
+        const pct = null;
         const sign = outcomeSign(r, pct, usd);
         if (sign > 0) addToSide(profit, pct, r, usd);
         else if (sign < 0) addToSide(loss, pct, r, usd);
@@ -719,23 +718,14 @@
 
     function sideTone(side) {
       if (side.hasUsd) return tone(side.usd);
-      if (side.hasPct) return tone(side.pct);
       if (side.hasR) return tone(side.r);
       return "flat";
     }
 
     function sideValue(side) {
       if (side.hasUsd) return side.usd;
-      if (side.hasPct) return side.pct;
       if (side.hasR) return side.r;
       return side.n === 0 ? 0 : null;
-    }
-
-    function openPnlPct(row) {
-      const r = num(row && row.unrealized_r);
-      const risk = num(row && row.risk_pct);
-      if (r === null || risk === null) return null;
-      return r * risk;
     }
 
     function pnlCard(label, side, kind) {
@@ -743,14 +733,13 @@
       return el("article", { class: "card pnl-card " + kind }, [
         el("p", { class: "label", text: label }),
         el("p", { class: "value " + sideTone(side), text: sideUsd(side) }),
-        el("p", { class: "sub", text: sidePct(side) + " · " + sideR(side) + " · " + count })
+        el("p", { class: "sub", text: sideR(side) + " · " + count })
       ]);
     }
 
-    function moneyCell(usd, pct) {
+    function moneyCell(usd) {
       return el("div", { class: "money" }, [
-        signedText(formatUsd(usd), usd),
-        el("div", { class: "sym-id", text: formatPct(pct, 2, true) })
+        signedText(formatUsd(usd), usd)
       ]);
     }
 
@@ -776,9 +765,9 @@
       const unrealized = openSides(opens);
       note.replaceChildren(
         document.createTextNode("Open profit "),
-        signedText(sideUsd(unrealized.profit) + " · " + sidePct(unrealized.profit), sideValue(unrealized.profit)),
+        signedText(sideUsd(unrealized.profit) + " · " + sideR(unrealized.profit), sideValue(unrealized.profit)),
         document.createTextNode("  ·  Open loss "),
-        signedText(sideUsd(unrealized.loss) + " · " + sidePct(unrealized.loss), sideValue(unrealized.loss))
+        signedText(sideUsd(unrealized.loss) + " · " + sideR(unrealized.loss), sideValue(unrealized.loss))
       );
     }
 
@@ -786,7 +775,7 @@
       const root = document.getElementById("stats");
       const s = stats || {};
       root.replaceChildren(
-        statCard("Total return", formatPct(s.total_return_pct, 2, true), tone(s.total_return_pct)),
+        statCard("Total P&L", formatUsd(s.total_pnl_usd), tone(s.total_pnl_usd)),
         statCard(
           "Trades",
           formatCount(s.trades),
@@ -798,8 +787,8 @@
         statCard("Profit factor", formatPF(s.profit_factor), "flat"),
         statCard(
           "Max drawdown",
-          formatPct(s.max_drawdown_pct, 2, false),
-          num(s.max_drawdown_pct) > 0 ? "neg" : "flat"
+          num(s.max_drawdown_usd) > 0 ? formatUsd(-num(s.max_drawdown_usd)) : formatUsd(s.max_drawdown_usd),
+          num(s.max_drawdown_usd) > 0 ? "neg" : "flat"
         )
       );
     }
@@ -807,39 +796,6 @@
     function renderToday(today) {
       const root = document.getElementById("today");
       const t = today || {};
-      const pnl = num(t.pnl_pct);
-      const cap = num(t.loss_cap_pct);
-      const used = pnl !== null && pnl < 0 ? Math.abs(pnl) : 0;
-      const ratio = cap !== null && cap > 0 ? used / cap : null;
-      let fill = 0;
-      let fillClass = "";
-      let note = "Daily loss cap is not set.";
-      if (ratio !== null) {
-        fill = Math.min(ratio, 1) * 100;
-        if (ratio >= 1) fillClass = "is-breach";
-        else if (ratio >= 0.7) fillClass = "is-hot";
-        else if (ratio > 0) fillClass = "";
-        if (ratio >= 1) {
-          note = "Cap reached · " + formatPct(used, 2, false) + " loss vs " + formatPct(cap, 2, false) + " limit";
-        } else if (used === 0) {
-          note = "Cap unused · limit " + formatPct(cap, 2, false);
-        } else {
-          note = formatPct(used, 2, false) + " of " + formatPct(cap, 2, false) + " cap used";
-        }
-      }
-
-      const meter = el("div", {
-        class: "meter",
-        role: "meter",
-        "aria-label": "Daily loss used",
-        "aria-valuemin": "0",
-        "aria-valuemax": cap !== null && cap > 0 ? String(cap) : "1",
-        "aria-valuenow": String(used)
-      }, [
-        el("div", { class: "meter-fill " + fillClass })
-      ]);
-      meter.firstChild.style.width = fill + "%";
-
       const trades = num(t.trades_taken);
       const usd = num(t.pnl_usd);
       const tradeLabel = trades === null ? "—" : trades === 1 ? "1 trade today" : formatCount(trades) + " trades today";
@@ -849,16 +805,9 @@
           el("h2", { id: "today-title", text: "Today · " + formatDateLabel(t.date) }),
           el("span", { class: "hint", text: tradeLabel })
         ]),
-        el("div", { class: "today-grid" }, [
-          el("div", {}, [
-            el("p", { class: "today-pnl " + tone(pnl), text: formatPct(pnl, 2, true) }),
-            el("p", { class: "today-usd " + tone(usd), text: formatUsd(usd) })
-          ]),
-          el("div", {}, [
-            el("p", { class: "meter-label", text: "Daily loss cap" }),
-            meter,
-            el("p", { class: "meter-note", text: note })
-          ])
+        el("div", {}, [
+          el("p", { class: "today-pnl " + tone(usd), text: formatUsd(usd) }),
+          el("p", { class: "meta", text: "Realized P&L for the UTC trading day, in USDC. A daily loss cap is enforced by the trading rules." })
         ])
       );
     }
@@ -868,7 +817,7 @@
       const empty = document.getElementById("equity-empty");
       const meta = document.getElementById("equity-meta");
       const series = (points || [])
-        .filter(function (point) { return point && num(point.return_pct) !== null; })
+        .filter(function (point) { return point && num(point.pnl_usd) !== null; })
         .slice()
         .sort(function (a, b) { return (Date.parse(a.t) || 0) - (Date.parse(b.t) || 0); });
 
@@ -887,15 +836,15 @@
 
       canvas.parentElement.hidden = false;
       empty.hidden = true;
-      const values = series.map(function (point) { return num(point.return_pct); });
+      const values = series.map(function (point) { return num(point.pnl_usd); });
       const last = values[values.length - 1];
       const line = last >= 0 ? "#3dd68c" : "#ff6b6b";
       const fill = last >= 0 ? "rgba(61, 214, 140, 0.16)" : "rgba(255, 107, 107, 0.14)";
       const min = Math.min.apply(null, values.concat([0]));
       const max = Math.max.apply(null, values.concat([0]));
-      const pad = Math.max((max - min) * 0.25, 0.5);
+      const pad = Math.max((max - min) * 0.25, 1);
       meta.textContent = (series.length === 1 ? "Starting point " : "Latest ")
-        + formatPct(last, 2, true)
+        + formatUsd(last)
         + " · "
         + formatHKT(series[series.length - 1].t, false);
 
@@ -912,7 +861,7 @@
         data: {
           labels: series.map(function (point) { return formatAxis(point.t); }),
           datasets: [{
-            label: "Return",
+            label: "P&L",
             data: values,
             borderColor: line,
             backgroundColor: fill,
@@ -937,7 +886,7 @@
                   return formatHKT(point.t, true);
                 },
                 label: function (item) {
-                  return "Return " + formatPct(item.parsed.y, 2, true);
+                  return "P&L " + formatUsd(item.parsed.y);
                 }
               }
             }
@@ -953,7 +902,7 @@
               grid: { color: "rgba(231, 237, 246, 0.06)" },
               ticks: {
                 color: "#a7b3c6",
-                callback: function (value) { return formatPct(value, 1, true); }
+                callback: function (value) { return formatUsd(value); }
               }
             }
           }
@@ -1032,7 +981,7 @@
         return;
       }
       root.replaceChildren(buildTable(
-        ["Symbol", "Strategy", "Opened", "Entry", "Stop", "Targets", "Risk", "Last", "Open R", "Open P&L"],
+        ["Symbol", "Strategy", "Opened", "Entry", "Stop", "Targets", "Last", "Open R", "Open P&L"],
         list.map(function (row) {
           return [
             symbolCell(row),
@@ -1041,10 +990,9 @@
             formatPrice(row.entry),
             formatPrice(row.stop),
             targetsText(row.targets),
-            formatPct(row.risk_pct, 2, false),
             formatPrice(row.last_price),
             signedText(formatR(row.unrealized_r), row.unrealized_r),
-            moneyCell(row.unrealized_usd, openPnlPct(row))
+            moneyCell(row.unrealized_usd)
           ];
         })
       ));
@@ -1072,7 +1020,7 @@
             formatPrice(row.entry),
             formatPrice(row.exit),
             signedText(formatR(row.r), row.r),
-            moneyCell(row.pnl_usd, row.pnl_pct),
+            moneyCell(row.pnl_usd),
             reason
           ];
         })
@@ -1090,7 +1038,7 @@
       const sides = closedSides(matched);
       const side = which === "profit" ? sides.profit : sides.loss;
       if (side.hasUsd || side.n === 0) return { text: sideUsd(side), value: side.hasUsd ? side.usd : 0 };
-      return { text: sidePct(side), value: side.hasPct ? side.pct : null };
+      return { text: "—", value: null };
     }
 
     function renderStrategies(rows, closed) {
