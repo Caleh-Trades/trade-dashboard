@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0e13">
+  <meta name="description" content="Public trading performance: percentages, R multiples, and prices.">
+  <title>Trading performance</title>
+  <style>
+    :root {
+      --bg: #0b0e13;
+      --elev: #131923;
+      --elev-2: #1b2330;
+      --line: rgba(231, 237, 246, 0.1);
+      --text: #e7edf6;
+      --muted: #a7b3c6;
+      --faint: #7e8ba0;
+      --green: #3dd68c;
+      --green-dim: rgba(61, 214, 140, 0.14);
+      --red: #ff6b6b;
+      --red-dim: rgba(255, 107, 107, 0.14);
+      --amber: #f5b942;
+      --amber-dim: rgba(245, 185, 66, 0.16);
+      --orange: #ff8a4c;
+      --blue: #9ebfff;
+      --radius: 14px;
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+      color-scheme: dark;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+      background:
+        radial-gradient(1100px 480px at 8% -10%, rgba(158, 191, 255, 0.09), transparent 55%),
+        radial-gradient(800px 360px at 100% 0%, rgba(61, 214, 140, 0.06), transparent 50%),
+        var(--bg);
+      line-height: 1.45;
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 56px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .mark {
+      width: 42px;
+      height: 42px;
+      flex: none;
+    }
+
+    .eyebrow {
+      margin: 0 0 2px;
+      color: var(--faint);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.7rem;
+      font-weight: 650;
+      letter-spacing: -0.03em;
+    }
+
+    .updated {
+      text-align: right;
+    }
+
+    .updated .label,
+    .section-head .hint,
+    .card .label,
+    .meter-note,
+    .meta,
+    .empty,
+    footer,
+    .sym-id,
+    th {
+      color: var(--muted);
+    }
+
+    .updated .label {
+      display: block;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    time.stamp {
+      display: block;
+      margin: 2px 0 8px;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.95rem;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--elev);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    button:hover { background: var(--elev-2); }
+    button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+    button:disabled { opacity: 0.6; cursor: progress; }
+
+    .alert {
+      margin: 0 0 16px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      background: #3a1618;
+      border: 1px solid rgba(255, 107, 107, 0.7);
+      color: #ffd7d7;
+      box-shadow: var(--shadow);
+    }
+
+    .loading {
+      color: var(--muted);
+      padding: 28px 0;
+    }
+
+    main { display: grid; gap: 14px; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .card, .panel {
+      background: var(--elev);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .card { padding: 14px 14px 12px; }
+
+    .card .label {
+      margin: 0;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .card .value {
+      margin: 8px 0 2px;
+      font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+      font-weight: 650;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .card .sub {
+      margin: 0;
+      color: var(--faint);
+      font-size: 0.8rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .panel { padding: 16px; }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+
+    .today-grid {
+      display: grid;
+      grid-template-columns: minmax(140px, 220px) 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .today-pnl {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      font-weight: 680;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .meter {
+      height: 12px;
+      border-radius: 999px;
+      background: var(--elev-2);
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: var(--amber);
+    }
+
+    .meter-fill.is-hot { background: var(--orange); }
+    .meter-fill.is-breach { background: var(--red); }
+
+    .meter-label {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .meter-note {
+      margin: 8px 0 0;
+      font-size: 0.88rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chart-box { position: relative; height: 280px; }
+    .chart-box canvas { width: 100%; height: 100%; }
+    .meta { margin: 10px 0 0; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+
+    .empty {
+      margin: 4px 0 2px;
+      padding: 18px 4px;
+      text-align: center;
+    }
+
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    th, td {
+      text-align: right;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    th {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    th:first-child, td:first-child { text-align: left; }
+
+    tbody tr:last-child td { border-bottom: 0; }
+
+    td:first-child, th:first-child {
+      position: sticky;
+      left: 0;
+      background: var(--elev);
+      z-index: 1;
+    }
+
+    .sym-top { display: flex; align-items: center; gap: 8px; }
+    .sym-name { font-weight: 650; }
+    .sym-id { font-size: 0.75rem; margin-top: 2px; }
+
+    .side, .pill, .status {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: var(--elev-2);
+    }
+
+    .side-long { color: var(--green); background: var(--green-dim); border-color: transparent; }
+    .pill { text-transform: none; letter-spacing: 0; }
+
+    .num.pos { color: var(--green); }
+    .num.neg { color: var(--red); }
+    .num.flat { color: var(--text); }
+    .value.pos, .today-pnl.pos { color: var(--green); }
+    .value.neg, .today-pnl.neg { color: var(--red); }
+    .value.flat, .today-pnl.flat { color: var(--text); }
+
+    .scorecards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .score-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .score-top h3 { margin: 0; font-size: 1rem; }
+
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 0; }
+    .metrics div { min-width: 0; }
+    .metrics dt { color: var(--faint); font-size: 0.75rem; }
+    .metrics dd { margin: 2px 0 0; font-variant-numeric: tabular-nums; font-weight: 650; }
+
+    .compare th:first-child, .compare td:first-child { color: var(--muted); font-weight: 500; }
+    .compare th:not(:first-child), .compare td:not(:first-child) { text-align: right; }
+
+    footer {
+      margin-top: 22px;
+      font-size: 0.8rem;
+    }
+
+    @media (min-width: 980px) {
+      .stats { grid-template-columns: repeat(6, 1fr); }
+    }
+
+    @media (max-width: 720px) {
+      .wrap { width: min(1120px, calc(100% - 20px)); padding-top: 18px; }
+      header { flex-direction: column; align-items: flex-start; }
+      .updated { text-align: left; }
+      .today-grid { grid-template-columns: 1fr; gap: 12px; }
+      .chart-box { height: 220px; }
+      h1 { font-size: 1.45rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .meter-fill { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p id="alert" class="alert" role="alert" hidden></p>
+    <header>
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 42 42" aria-hidden="true">
+          <rect width="42" height="42" rx="12" fill="#1b2330"/>
+          <path d="M9 28 L17 20 L23 24 L33 12" fill="none" stroke="#3dd68c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <p class="eyebrow">Day trading</p>
+          <h1>Performance</h1>
+        </div>
+      </div>
+      <div class="updated">
+        <span class="label">Last updated</span>
+        <time id="updated" class="stamp" datetime="">—</time>
+        <button id="refresh" type="button">Refresh</button>
+      </div>
+    </header>
+    <p id="loading" class="loading">Loading performance…</p>
+    <main id="dashboard" hidden>
+      <section class="stats" id="stats" aria-label="Headline stats"></section>
+      <section class="panel" id="today" aria-labelledby="today-title"></section>
+      <section class="panel" aria-labelledby="equity-title">
+        <div class="section-head">
+          <h2 id="equity-title">Equity curve</h2>
+          <span class="hint">Cumulative return</span>
+        </div>
+        <div class="chart-box">
+          <canvas id="equity" role="img" aria-label="Cumulative return percent over time"></canvas>
+        </div>
+        <p id="equity-empty" class="empty" hidden>No equity data yet.</p>
+        <p id="equity-meta" class="meta"></p>
+      </section>
+      <section class="panel" aria-labelledby="open-title">
+        <div class="section-head">
+          <h2 id="open-title">Open positions</h2>
+          <span id="open-count" class="hint"></span>
+        </div>
+        <div id="open"></div>
+      </section>
+      <section class="panel" aria-labelledby="closed-title">
+        <div class="section-head">
+          <h2 id="closed-title">Closed trades</h2>
+          <span id="closed-count" class="hint"></span>
+        </div>
+        <div id="closed"></div>
+      </section>
+      <section class="panel" aria-labelledby="strategy-title">
+        <div class="section-head">
+          <h2 id="strategy-title">Strategies</h2>
+        </div>
+        <div id="strategies"></div>
+      </section>
+      <section class="panel" aria-labelledby="paper-title">
+        <div class="section-head">
+          <h2 id="paper-title">Paper comparison</h2>
+          <span class="hint">In window vs out of window</span>
+        </div>
+        <div id="paper"></div>
+      </section>
+    </main>
+    <footer>Public page. Only percentages, R multiples, and market prices are shown.</footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <script>
+    const HKT = "Asia/Hong_Kong";
+    const alertEl = document.getElementById("alert");
+    const loadingEl = document.getElementById("loading");
+    const dashboardEl = document.getElementById("dashboard");
+    const refreshBtn = document.getElementById("refresh");
+    let equityChart = null;
+    let hasData = false;
+    let loading = false;
+
+    function num(value) {
+      if (value === null || value === undefined || value === "") return null;
+      const n = typeof value === "number" ? value : Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function tone(value) {
+      const n = num(value);
+      if (n === null || n === 0) return "flat";
+      return n > 0 ? "pos" : "neg";
+    }
+
+    function formatPct(value, digits = 2, signed = false) {
+      const n = num(value);
+      if (n === null) return "—";
+      const body = Math.abs(n).toLocaleString("en-US", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      });
+      if (!signed || n === 0) return body + "%";
+      return (n > 0 ? "+" : "-") + body + "%";
+    }
+
+    function formatWin(value) {
+      return formatPct(value, 1, false);
+    }
+
+    function formatR(value) {
+      const n = num(value);
+      if (n === null) return "—";
+      const body = Math.abs(n).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      if (n === 0) return body + "R";
+      return (n > 0 ? "+" : "-") + body + "R";
+    }
+
+    function formatPF(value) {
+      const n = num(value);
+      if (n === null) return "—";
+      return n.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function formatCount(value) {
+      const n = num(value);
+      if (n === null) return "—";
+      return Math.round(n).toLocaleString("en-US");
+    }
+
+    function formatPrice(value) {
+      const n = num(value);
+      if (n === null) return "—";
+      const abs = Math.abs(n);
+      let digits = 2;
+      if (abs !== 0 && abs < 0.0001) digits = 8;
+      else if (abs !== 0 && abs < 0.01) digits = 6;
+      else if (abs !== 0 && abs < 1) digits = 4;
+      return n.toLocaleString("en-US", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      });
+    }
+
+    function formatDateLabel(isoDate) {
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate || "");
+      if (!match) return isoDate || "—";
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return Number(match[3]) + " " + months[Number(match[2]) - 1] + " " + match[1];
+    }
+
+    function formatHKT(iso, seconds) {
+      if (!iso) return "—";
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return String(iso);
+      const day = new Intl.DateTimeFormat("en-GB", {
+        timeZone: HKT,
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      }).format(date);
+      const clock = new Intl.DateTimeFormat("en-GB", {
+        timeZone: HKT,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: seconds ? "2-digit" : undefined,
+        hourCycle: "h23"
+      }).format(date);
+      return day + ", " + clock + " HKT";
+    }
+
+    function formatAxis(iso) {
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return "";
+      const day = new Intl.DateTimeFormat("en-GB", {
+        timeZone: HKT,
+        day: "numeric",
+        month: "short"
+      }).format(date);
+      const clock = new Intl.DateTimeFormat("en-GB", {
+        timeZone: HKT,
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23"
+      }).format(date);
+      return day + " " + clock;
+    }
+
+    function el(tag, attrs, children) {
+      const node = document.createElement(tag);
+      Object.entries(attrs || {}).forEach(function (entry) {
+        const key = entry[0];
+        const value = entry[1];
+        if (value === null || value === undefined || value === false) return;
+        if (key === "class") node.className = value;
+        else if (key === "text") node.textContent = value;
+        else node.setAttribute(key, value);
+      });
+      (children || []).forEach(function (child) {
+        if (child === null || child === undefined) return;
+        node.append(child.nodeType ? child : document.createTextNode(String(child)));
+      });
+      return node;
+    }
+
+    function signedText(text, value) {
+      return el("span", { class: "num " + tone(value), text: text });
+    }
+
+    function showAlert(message) {
+      alertEl.hidden = false;
+      alertEl.textContent = message;
+    }
+
+    function clearAlert() {
+      alertEl.hidden = true;
+      alertEl.textContent = "";
+    }
+
+    function statCard(label, valueText, toneName, sub) {
+      return el("article", { class: "card" }, [
+        el("p", { class: "label", text: label }),
+        el("p", { class: "value " + (toneName || "flat"), text: valueText }),
+        sub ? el("p", { class: "sub", text: sub }) : null
+      ]);
+    }
+
+    function renderStats(stats) {
+      const root = document.getElementById("stats");
+      const s = stats || {};
+      root.replaceChildren(
+        statCard("Total return", formatPct(s.total_return_pct, 2, true), tone(s.total_return_pct)),
+        statCard(
+          "Trades",
+          formatCount(s.trades),
+          "flat",
+          formatCount(s.wins) + " wins · " + formatCount(s.losses) + " losses"
+        ),
+        statCard("Win rate", formatWin(s.win_rate), "flat"),
+        statCard("Average R", formatR(s.avg_r), tone(s.avg_r)),
+        statCard("Profit factor", formatPF(s.profit_factor), "flat"),
+        statCard(
+          "Max drawdown",
+          formatPct(s.max_drawdown_pct, 2, false),
+          num(s.max_drawdown_pct) > 0 ? "neg" : "flat"
+        )
+      );
+    }
+
+    function renderToday(today) {
+      const root = document.getElementById("today");
+      const t = today || {};
+      const pnl = num(t.pnl_pct);
+      const cap = num(t.loss_cap_pct);
+      const used = pnl !== null && pnl < 0 ? Math.abs(pnl) : 0;
+      const ratio = cap !== null && cap > 0 ? used / cap : null;
+      let fill = 0;
+      let fillClass = "";
+      let note = "Daily loss cap is not set.";
+      if (ratio !== null) {
+        fill = Math.min(ratio, 1) * 100;
+        if (ratio >= 1) fillClass = "is-breach";
+        else if (ratio >= 0.7) fillClass = "is-hot";
+        else if (ratio > 0) fillClass = "";
+        if (ratio >= 1) {
+          note = "Cap reached · " + formatPct(used, 2, false) + " loss vs " + formatPct(cap, 2, false) + " limit";
+        } else if (used === 0) {
+          note = "Cap unused · limit " + formatPct(cap, 2, false);
+        } else {
+          note = formatPct(used, 2, false) + " of " + formatPct(cap, 2, false) + " cap used";
+        }
+      }
+
+      const meter = el("div", {
+        class: "meter",
+        role: "meter",
+        "aria-label": "Daily loss used",
+        "aria-valuemin": "0",
+        "aria-valuemax": cap !== null && cap > 0 ? String(cap) : "1",
+        "aria-valuenow": String(used)
+      }, [
+        el("div", { class: "meter-fill " + fillClass })
+      ]);
+      meter.firstChild.style.width = fill + "%";
+
+      const trades = num(t.trades_taken);
+      const tradeLabel = trades === null ? "—" : trades === 1 ? "1 trade today" : formatCount(trades) + " trades today";
+
+      root.replaceChildren(
+        el("div", { class: "section-head" }, [
+          el("h2", { id: "today-title", text: "Today · " + formatDateLabel(t.date) }),
+          el("span", { class: "hint", text: tradeLabel })
+        ]),
+        el("div", { class: "today-grid" }, [
+          el("p", { class: "today-pnl " + tone(pnl), text: formatPct(pnl, 2, true) }),
+          el("div", {}, [
+            el("p", { class: "meter-label", text: "Daily loss cap" }),
+            meter,
+            el("p", { class: "meter-note", text: note })
+          ])
+        ])
+      );
+    }
+
+    function renderEquity(points) {
+      const canvas = document.getElementById("equity");
+      const empty = document.getElementById("equity-empty");
+      const meta = document.getElementById("equity-meta");
+      const series = (points || [])
+        .filter(function (point) { return point && num(point.return_pct) !== null; })
+        .slice()
+        .sort(function (a, b) { return (Date.parse(a.t) || 0) - (Date.parse(b.t) || 0); });
+
+      if (equityChart) {
+        equityChart.destroy();
+        equityChart = null;
+      }
+
+      if (!series.length) {
+        canvas.parentElement.hidden = true;
+        empty.hidden = false;
+        empty.textContent = "No equity data yet.";
+        meta.textContent = "";
+        return;
+      }
+
+      canvas.parentElement.hidden = false;
+      empty.hidden = true;
+      const values = series.map(function (point) { return num(point.return_pct); });
+      const last = values[values.length - 1];
+      const line = last >= 0 ? "#3dd68c" : "#ff6b6b";
+      const fill = last >= 0 ? "rgba(61, 214, 140, 0.16)" : "rgba(255, 107, 107, 0.14)";
+      const min = Math.min.apply(null, values.concat([0]));
+      const max = Math.max.apply(null, values.concat([0]));
+      const pad = Math.max((max - min) * 0.25, 0.5);
+      meta.textContent = (series.length === 1 ? "Starting point " : "Latest ")
+        + formatPct(last, 2, true)
+        + " · "
+        + formatHKT(series[series.length - 1].t, false);
+
+      if (typeof Chart === "undefined") {
+        canvas.parentElement.hidden = true;
+        empty.hidden = false;
+        empty.textContent = "Chart library failed to load. The latest return is still shown below.";
+        return;
+      }
+
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      equityChart = new Chart(canvas, {
+        type: "line",
+        data: {
+          labels: series.map(function (point) { return formatAxis(point.t); }),
+          datasets: [{
+            label: "Return",
+            data: values,
+            borderColor: line,
+            backgroundColor: fill,
+            fill: true,
+            tension: 0.25,
+            pointRadius: series.length === 1 ? 6 : (series.length > 24 ? 0 : 3.5),
+            pointHoverRadius: 5,
+            pointBackgroundColor: line,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: reduceMotion ? false : { duration: 400 },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: function (items) {
+                  const point = series[items[0].dataIndex];
+                  return formatHKT(point.t, true);
+                },
+                label: function (item) {
+                  return "Return " + formatPct(item.parsed.y, 2, true);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: "rgba(231, 237, 246, 0.06)" },
+              ticks: { color: "#a7b3c6", maxRotation: 0, autoSkip: true, maxTicksLimit: 6 }
+            },
+            y: {
+              min: min - pad,
+              max: max + pad,
+              grid: { color: "rgba(231, 237, 246, 0.06)" },
+              ticks: {
+                color: "#a7b3c6",
+                callback: function (value) { return formatPct(value, 1, true); }
+              }
+            }
+          }
+        },
+        plugins: [{
+          id: "zeroLine",
+          afterDraw: function (chart) {
+            const yScale = chart.scales.y;
+            if (!yScale) return;
+            const y = yScale.getPixelForValue(0);
+            const area = chart.chartArea;
+            const ctx = chart.ctx;
+            ctx.save();
+            ctx.strokeStyle = "rgba(231, 237, 246, 0.28)";
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(area.left, y);
+            ctx.lineTo(area.right, y);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }]
+      });
+    }
+
+    function symbolCell(row) {
+      const side = String(row.side || "").toLowerCase();
+      return el("div", { class: "sym" }, [
+        el("div", { class: "sym-top" }, [
+          el("span", { class: "sym-name", text: row.symbol || "—" }),
+          el("span", { class: "side side-" + side, text: row.side || "—" })
+        ]),
+        row.id ? el("div", { class: "sym-id", text: row.id }) : null
+      ]);
+    }
+
+    function timeText(iso) {
+      const node = el("time", { datetime: iso || "", text: formatHKT(iso, false) });
+      if (iso) node.title = formatHKT(iso, true);
+      return node;
+    }
+
+    function targetsText(targets) {
+      if (!Array.isArray(targets) || !targets.length) return "—";
+      return targets.map(formatPrice).join(" · ");
+    }
+
+    function buildTable(headers, rows) {
+      const headRow = el("tr");
+      headers.forEach(function (header, index) {
+        headRow.append(el("th", { scope: "col", text: header, class: index === 0 ? "sticky" : "" }));
+      });
+      const body = el("tbody");
+      rows.forEach(function (cells) {
+        const tr = el("tr");
+        cells.forEach(function (cell) {
+          const td = el("td");
+          if (cell && cell.nodeType) td.append(cell);
+          else td.textContent = cell === null || cell === undefined || cell === "" ? "—" : String(cell);
+          tr.append(td);
+        });
+        body.append(tr);
+      });
+      return el("div", { class: "table-scroll" }, [
+        el("table", {}, [el("thead", {}, [headRow]), body])
+      ]);
+    }
+
+    function renderOpen(rows) {
+      const root = document.getElementById("open");
+      const count = document.getElementById("open-count");
+      const list = Array.isArray(rows) ? rows : [];
+      count.textContent = list.length ? String(list.length) : "";
+      if (!list.length) {
+        root.replaceChildren(el("p", { class: "empty", text: "No open positions." }));
+        return;
+      }
+      root.replaceChildren(buildTable(
+        ["Symbol", "Strategy", "Opened", "Entry", "Stop", "Targets", "Risk", "Last", "Open R"],
+        list.map(function (row) {
+          return [
+            symbolCell(row),
+            row.strategy || "—",
+            timeText(row.opened),
+            formatPrice(row.entry),
+            formatPrice(row.stop),
+            targetsText(row.targets),
+            formatPct(row.risk_pct, 2, false),
+            formatPrice(row.last_price),
+            signedText(formatR(row.unrealized_r), row.unrealized_r)
+          ];
+        })
+      ));
+    }
+
+    function renderClosed(rows) {
+      const root = document.getElementById("closed");
+      const count = document.getElementById("closed-count");
+      const list = (Array.isArray(rows) ? rows.slice() : []).sort(function (a, b) {
+        return (Date.parse(b && b.closed) || 0) - (Date.parse(a && a.closed) || 0);
+      });
+      count.textContent = list.length ? String(list.length) : "";
+      if (!list.length) {
+        root.replaceChildren(el("p", { class: "empty", text: "No trades yet." }));
+        return;
+      }
+      root.replaceChildren(buildTable(
+        ["Symbol", "Strategy", "Closed", "Entry", "Exit", "R", "P&L", "Exit"],
+        list.map(function (row) {
+          const reason = el("span", { class: "pill", text: row.exit_reason || "—" });
+          return [
+            symbolCell(row),
+            row.strategy || "—",
+            timeText(row.closed),
+            formatPrice(row.entry),
+            formatPrice(row.exit),
+            signedText(formatR(row.r), row.r),
+            signedText(formatPct(row.pnl_pct, 2, true), row.pnl_pct),
+            reason
+          ];
+        })
+      ));
+    }
+
+    function renderStrategies(rows) {
+      const root = document.getElementById("strategies");
+      const list = Array.isArray(rows) ? rows : [];
+      if (!list.length) {
+        root.replaceChildren(el("p", { class: "empty", text: "No strategies yet." }));
+        return;
+      }
+      const grid = el("div", { class: "scorecards" });
+      list.forEach(function (row) {
+        const status = row.status || "—";
+        grid.append(el("article", { class: "card" }, [
+          el("div", { class: "score-top" }, [
+            el("h3", { text: row.name || "—" }),
+            el("span", { class: "status", text: status })
+          ]),
+          el("dl", { class: "metrics" }, [
+            el("div", {}, [el("dt", { text: "Trades" }), el("dd", { text: formatCount(row.trades) })]),
+            el("div", {}, [el("dt", { text: "Win rate" }), el("dd", { text: formatWin(row.win_rate) })]),
+            el("div", {}, [el("dt", { text: "Average R" }), el("dd", { class: "num " + tone(row.avg_r), text: formatR(row.avg_r) })]),
+            el("div", {}, [el("dt", { text: "Profit factor" }), el("dd", { text: formatPF(row.profit_factor) })])
+          ])
+        ]));
+      });
+      root.replaceChildren(grid);
+    }
+
+    function metricRow(label, inValue, outValue) {
+      return el("tr", {}, [
+        el("th", { scope: "row", text: label }),
+        el("td", {}, [inValue]),
+        el("td", {}, [outValue])
+      ]);
+    }
+
+    function renderPaper(paper) {
+      const root = document.getElementById("paper");
+      const block = paper || {};
+      const inn = block.in_window || {};
+      const out = block.out_of_window || {};
+      const inTrades = num(inn.trades) || 0;
+      const outTrades = num(out.trades) || 0;
+      const table = el("table", { class: "compare" }, [
+        el("thead", {}, [
+          el("tr", {}, [
+            el("th", { scope: "col", text: "" }),
+            el("th", { scope: "col", text: "In window" }),
+            el("th", { scope: "col", text: "Out of window" })
+          ])
+        ]),
+        el("tbody", {}, [
+          metricRow("Trades", document.createTextNode(formatCount(inn.trades)), document.createTextNode(formatCount(out.trades))),
+          metricRow("Win rate", document.createTextNode(formatWin(inn.win_rate)), document.createTextNode(formatWin(out.win_rate))),
+          metricRow("Average R", signedText(formatR(inn.avg_r), inn.avg_r), signedText(formatR(out.avg_r), out.avg_r)),
+          metricRow("Profit factor", document.createTextNode(formatPF(inn.profit_factor)), document.createTextNode(formatPF(out.profit_factor)))
+        ])
+      ]);
+      const children = [];
+      if (inTrades === 0 && outTrades === 0) {
+        children.push(el("p", { class: "empty", text: "No paper trades yet." }));
+      }
+      children.push(el("div", { class: "table-scroll" }, [table]));
+      root.replaceChildren.apply(root, children);
+    }
+
+    function render(data) {
+      const updated = data.updated || "";
+      const stamp = document.getElementById("updated");
+      stamp.textContent = formatHKT(updated, true);
+      stamp.setAttribute("datetime", updated);
+      loadingEl.hidden = true;
+      dashboardEl.hidden = false;
+      renderStats(data.stats);
+      renderToday(data.today);
+      renderEquity(data.equity_curve);
+      renderOpen(data.open_positions);
+      renderClosed(data.closed_trades);
+      renderStrategies(data.strategies);
+      renderPaper(data.paper);
+      hasData = true;
+      requestAnimationFrame(function () {
+        if (equityChart) equityChart.resize();
+      });
+    }
+
+    async function load() {
+      if (loading) return;
+      loading = true;
+      refreshBtn.disabled = true;
+      try {
+        const response = await fetch("data.json?t=" + Date.now(), { cache: "no-store" });
+        if (!response.ok) throw new Error("data.json returned " + response.status);
+        const data = await response.json();
+        if (!data || typeof data !== "object" || Array.isArray(data)) {
+          throw new Error("data.json is not an object");
+        }
+        clearAlert();
+        render(data);
+      } catch (error) {
+        const detail = error && error.message ? error.message : "Unknown error";
+        showAlert("Could not load data.json (" + detail + "). If this file was opened directly from disk, serve the folder over HTTP instead.");
+        loadingEl.hidden = true;
+        if (!hasData) dashboardEl.hidden = true;
+      } finally {
+        loading = false;
+        refreshBtn.disabled = false;
+      }
+    }
+
+    refreshBtn.addEventListener("click", load);
+    load();
+    setInterval(function () {
+      if (document.visibilityState === "visible") load();
+    }, 60000);
+  </script>
+</body>
+</html>
