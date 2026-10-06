@@ -316,9 +316,9 @@
     .num.pos { color: var(--green); }
     .num.neg { color: var(--red); }
     .num.flat { color: var(--text); }
-    .value.pos, .today-pnl.pos { color: var(--green); }
-    .value.neg, .today-pnl.neg { color: var(--red); }
-    .value.flat, .today-pnl.flat { color: var(--text); }
+    .value.pos, .today-pnl.pos, .today-usd.pos { color: var(--green); }
+    .value.neg, .today-pnl.neg, .today-usd.neg { color: var(--red); }
+    .value.flat, .today-pnl.flat, .today-usd.flat { color: var(--text); }
 
     .scorecards {
       display: grid;
@@ -344,6 +344,24 @@
     .compare th:first-child, .compare td:first-child { color: var(--muted); font-weight: 500; }
     .compare th:not(:first-child), .compare td:not(:first-child) { text-align: right; }
 
+    .pnl-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .pnl-card.profit { box-shadow: inset 3px 0 0 var(--green), var(--shadow); }
+    .pnl-card.loss { box-shadow: inset 3px 0 0 var(--red), var(--shadow); }
+
+    .today-usd {
+      margin: 2px 0 0;
+      font-size: 1.15rem;
+      font-weight: 650;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .money { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+
     footer {
       margin-top: 22px;
       font-size: 0.8rem;
@@ -357,7 +375,7 @@
       .wrap { width: min(1120px, calc(100% - 20px)); padding-top: 18px; }
       header { flex-direction: column; align-items: flex-start; }
       .updated { text-align: left; }
-      .today-grid { grid-template-columns: 1fr; gap: 12px; }
+      .today-grid, .pnl-grid { grid-template-columns: 1fr; gap: 12px; }
       .chart-box { height: 220px; }
       h1 { font-size: 1.45rem; }
     }
@@ -390,6 +408,14 @@
     <p id="loading" class="loading">Loading performance…</p>
     <main id="dashboard" hidden>
       <section class="stats" id="stats" aria-label="Headline stats"></section>
+      <section aria-labelledby="pnl-title">
+        <div class="section-head">
+          <h2 id="pnl-title">Profits and losses</h2>
+          <span id="pnl-hint" class="hint"></span>
+        </div>
+        <div id="pnl" class="pnl-grid"></div>
+        <p id="pnl-open" class="meta"></p>
+      </section>
       <section class="panel" id="today" aria-labelledby="today-title"></section>
       <section class="panel" aria-labelledby="equity-title">
         <div class="section-head">
@@ -430,7 +456,7 @@
         <div id="paper"></div>
       </section>
     </main>
-    <footer>Public page. Only percentages, R multiples, and market prices are shown.</footer>
+    <footer>Public page. Trade results are shown in USDC, percent, and R.</footer>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
@@ -469,6 +495,27 @@
 
     function formatWin(value) {
       return formatPct(value, 1, false);
+    }
+
+    function formatUsd(value) {
+      const n = num(value);
+      if (n === null) return "—";
+      const body = Math.abs(n).toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      if (n > 0) return "+" + body;
+      if (n < 0) return "-" + body;
+      return body;
+    }
+
+    function outcomeSign(r, pct, usd) {
+      if (usd !== null && usd !== 0) return Math.sign(usd);
+      if (r !== null && r !== 0) return Math.sign(r);
+      if (pct !== null && pct !== 0) return Math.sign(pct);
+      return 0;
     }
 
     function formatR(value) {
@@ -594,6 +641,147 @@
       ]);
     }
 
+    function blankSide() {
+      return { pct: 0, r: 0, usd: 0, n: 0, hasPct: false, hasR: false, hasUsd: false };
+    }
+
+    function addToSide(side, pct, r, usd) {
+      if (pct !== null) {
+        side.pct += pct;
+        side.hasPct = true;
+      }
+      if (r !== null) {
+        side.r += r;
+        side.hasR = true;
+      }
+      if (usd !== null) {
+        side.usd += usd;
+        side.hasUsd = true;
+      }
+      side.n += 1;
+    }
+
+    function closedSides(trades) {
+      const profit = blankSide();
+      const loss = blankSide();
+      (trades || []).forEach(function (row) {
+        const pct = num(row && row.pnl_pct);
+        const r = num(row && row.r);
+        const usd = num(row && row.pnl_usd);
+        const sign = outcomeSign(r, pct, usd);
+        if (sign > 0) addToSide(profit, pct, r, usd);
+        else if (sign < 0) addToSide(loss, pct, r, usd);
+      });
+      return { profit: profit, loss: loss };
+    }
+
+    function openSides(rows) {
+      const profit = blankSide();
+      const loss = blankSide();
+      (rows || []).forEach(function (row) {
+        const r = num(row && row.unrealized_r);
+        const usd = num(row && row.unrealized_usd);
+        const risk = num(row && row.risk_pct);
+        const pct = r !== null && risk !== null ? r * risk : null;
+        const sign = outcomeSign(r, pct, usd);
+        if (sign > 0) addToSide(profit, pct, r, usd);
+        else if (sign < 0) addToSide(loss, pct, r, usd);
+      });
+      return { profit: profit, loss: loss };
+    }
+
+    function netSide(profit, loss) {
+      return {
+        pct: (profit.hasPct ? profit.pct : 0) + (loss.hasPct ? loss.pct : 0),
+        r: (profit.hasR ? profit.r : 0) + (loss.hasR ? loss.r : 0),
+        usd: (profit.hasUsd ? profit.usd : 0) + (loss.hasUsd ? loss.usd : 0),
+        n: profit.n + loss.n,
+        hasPct: profit.hasPct || loss.hasPct,
+        hasR: profit.hasR || loss.hasR,
+        hasUsd: profit.hasUsd || loss.hasUsd
+      };
+    }
+
+    function sidePct(side) {
+      if (side.hasPct || side.n === 0) return formatPct(side.hasPct ? side.pct : 0, 2, true);
+      return "—";
+    }
+
+    function sideR(side) {
+      if (side.hasR || side.n === 0) return formatR(side.hasR ? side.r : 0);
+      return "—";
+    }
+
+    function sideUsd(side) {
+      if (side.hasUsd || side.n === 0) return formatUsd(side.hasUsd ? side.usd : 0);
+      return "—";
+    }
+
+    function sideTone(side) {
+      if (side.hasUsd) return tone(side.usd);
+      if (side.hasPct) return tone(side.pct);
+      if (side.hasR) return tone(side.r);
+      return "flat";
+    }
+
+    function sideValue(side) {
+      if (side.hasUsd) return side.usd;
+      if (side.hasPct) return side.pct;
+      if (side.hasR) return side.r;
+      return side.n === 0 ? 0 : null;
+    }
+
+    function openPnlPct(row) {
+      const r = num(row && row.unrealized_r);
+      const risk = num(row && row.risk_pct);
+      if (r === null || risk === null) return null;
+      return r * risk;
+    }
+
+    function pnlCard(label, side, kind) {
+      const count = side.n === 1 ? "1 trade" : formatCount(side.n) + " trades";
+      return el("article", { class: "card pnl-card " + kind }, [
+        el("p", { class: "label", text: label }),
+        el("p", { class: "value " + sideTone(side), text: sideUsd(side) }),
+        el("p", { class: "sub", text: sidePct(side) + " · " + sideR(side) + " · " + count })
+      ]);
+    }
+
+    function moneyCell(usd, pct) {
+      return el("div", { class: "money" }, [
+        signedText(formatUsd(usd), usd),
+        el("div", { class: "sym-id", text: formatPct(pct, 2, true) })
+      ]);
+    }
+
+    function renderPnL(closed, openRows) {
+      const trades = Array.isArray(closed) ? closed : [];
+      const opens = Array.isArray(openRows) ? openRows : [];
+      const sides = closedSides(trades);
+      const net = netSide(sides.profit, sides.loss);
+      document.getElementById("pnl-hint").textContent = trades.length
+        ? "Closed trades, in USDC"
+        : "No closed trades yet";
+      document.getElementById("pnl").replaceChildren(
+        pnlCard("Profit", sides.profit, "profit"),
+        pnlCard("Loss", sides.loss, "loss"),
+        pnlCard("Net", net, "net")
+      );
+
+      const note = document.getElementById("pnl-open");
+      if (!opens.length) {
+        note.replaceChildren(document.createTextNode("No open profit or loss."));
+        return;
+      }
+      const unrealized = openSides(opens);
+      note.replaceChildren(
+        document.createTextNode("Open profit "),
+        signedText(sideUsd(unrealized.profit) + " · " + sidePct(unrealized.profit), sideValue(unrealized.profit)),
+        document.createTextNode("  ·  Open loss "),
+        signedText(sideUsd(unrealized.loss) + " · " + sidePct(unrealized.loss), sideValue(unrealized.loss))
+      );
+    }
+
     function renderStats(stats) {
       const root = document.getElementById("stats");
       const s = stats || {};
@@ -653,6 +841,7 @@
       meter.firstChild.style.width = fill + "%";
 
       const trades = num(t.trades_taken);
+      const usd = num(t.pnl_usd);
       const tradeLabel = trades === null ? "—" : trades === 1 ? "1 trade today" : formatCount(trades) + " trades today";
 
       root.replaceChildren(
@@ -661,7 +850,10 @@
           el("span", { class: "hint", text: tradeLabel })
         ]),
         el("div", { class: "today-grid" }, [
-          el("p", { class: "today-pnl " + tone(pnl), text: formatPct(pnl, 2, true) }),
+          el("div", {}, [
+            el("p", { class: "today-pnl " + tone(pnl), text: formatPct(pnl, 2, true) }),
+            el("p", { class: "today-usd " + tone(usd), text: formatUsd(usd) })
+          ]),
           el("div", {}, [
             el("p", { class: "meter-label", text: "Daily loss cap" }),
             meter,
@@ -840,7 +1032,7 @@
         return;
       }
       root.replaceChildren(buildTable(
-        ["Symbol", "Strategy", "Opened", "Entry", "Stop", "Targets", "Risk", "Last", "Open R"],
+        ["Symbol", "Strategy", "Opened", "Entry", "Stop", "Targets", "Risk", "Last", "Open R", "Open P&L"],
         list.map(function (row) {
           return [
             symbolCell(row),
@@ -851,7 +1043,8 @@
             targetsText(row.targets),
             formatPct(row.risk_pct, 2, false),
             formatPrice(row.last_price),
-            signedText(formatR(row.unrealized_r), row.unrealized_r)
+            signedText(formatR(row.unrealized_r), row.unrealized_r),
+            moneyCell(row.unrealized_usd, openPnlPct(row))
           ];
         })
       ));
@@ -879,14 +1072,28 @@
             formatPrice(row.entry),
             formatPrice(row.exit),
             signedText(formatR(row.r), row.r),
-            signedText(formatPct(row.pnl_pct, 2, true), row.pnl_pct),
+            moneyCell(row.pnl_usd, row.pnl_pct),
             reason
           ];
         })
       ));
     }
 
-    function renderStrategies(rows) {
+    function strategySide(closed, name, tradeCount, which) {
+      const matched = (closed || []).filter(function (row) {
+        return row && row.strategy === name;
+      });
+      if (!matched.length) {
+        if ((num(tradeCount) || 0) === 0) return { text: formatUsd(0), value: 0 };
+        return { text: "—", value: null };
+      }
+      const sides = closedSides(matched);
+      const side = which === "profit" ? sides.profit : sides.loss;
+      if (side.hasUsd || side.n === 0) return { text: sideUsd(side), value: side.hasUsd ? side.usd : 0 };
+      return { text: sidePct(side), value: side.hasPct ? side.pct : null };
+    }
+
+    function renderStrategies(rows, closed) {
       const root = document.getElementById("strategies");
       const list = Array.isArray(rows) ? rows : [];
       if (!list.length) {
@@ -896,6 +1103,8 @@
       const grid = el("div", { class: "scorecards" });
       list.forEach(function (row) {
         const status = row.status || "—";
+        const profit = strategySide(closed, row.name, row.trades, "profit");
+        const loss = strategySide(closed, row.name, row.trades, "loss");
         grid.append(el("article", { class: "card" }, [
           el("div", { class: "score-top" }, [
             el("h3", { text: row.name || "—" }),
@@ -905,7 +1114,9 @@
             el("div", {}, [el("dt", { text: "Trades" }), el("dd", { text: formatCount(row.trades) })]),
             el("div", {}, [el("dt", { text: "Win rate" }), el("dd", { text: formatWin(row.win_rate) })]),
             el("div", {}, [el("dt", { text: "Average R" }), el("dd", { class: "num " + tone(row.avg_r), text: formatR(row.avg_r) })]),
-            el("div", {}, [el("dt", { text: "Profit factor" }), el("dd", { text: formatPF(row.profit_factor) })])
+            el("div", {}, [el("dt", { text: "Profit factor" }), el("dd", { text: formatPF(row.profit_factor) })]),
+            el("div", {}, [el("dt", { text: "Profit" }), el("dd", { class: "num " + tone(profit.value), text: profit.text })]),
+            el("div", {}, [el("dt", { text: "Loss" }), el("dd", { class: "num " + tone(loss.value), text: loss.text })])
           ])
         ]));
       });
@@ -958,11 +1169,12 @@
       loadingEl.hidden = true;
       dashboardEl.hidden = false;
       renderStats(data.stats);
+      renderPnL(data.closed_trades, data.open_positions);
       renderToday(data.today);
       renderEquity(data.equity_curve);
       renderOpen(data.open_positions);
       renderClosed(data.closed_trades);
-      renderStrategies(data.strategies);
+      renderStrategies(data.strategies, data.closed_trades);
       renderPaper(data.paper);
       hasData = true;
       requestAnimationFrame(function () {

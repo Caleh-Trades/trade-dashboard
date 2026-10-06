@@ -1,6 +1,6 @@
 # Trading performance dashboard
 
-Static single-page dashboard for a long-only spot day-trading assistant. It reads `data.json` in the browser and shows percentages, R multiples, and market prices. It does not show balances, account IDs, or other identifying account data.
+Static single-page dashboard for a long-only spot day-trading assistant. It reads `data.json` in the browser and shows trade profit and loss in USDC, plus percentages, R multiples, and market prices. It does not show the account balance, account IDs, or other identifying account data.
 
 The assistant should overwrite `data.json` in the repository root after each trade or cycle and push that change. Reload the page to see the new file. While the page is open it also refetches about once a minute.
 
@@ -48,10 +48,13 @@ Top-level keys, and only these keys, are:
 | --- | --- |
 | `date` | Session date, `YYYY-MM-DD`. |
 | `pnl_pct` | Today's P&L in percent points. |
+| `pnl_usd` | Today's P&L in USDC. `4.5` means +$4.50. This is the day's result, not the account balance. |
 | `loss_cap_pct` | Daily loss cap in percent points. `1.0` means 1%. |
 | `trades_taken` | Trades taken today. |
 
-Every `*_pct` field is already in percent points (`1.0` = 1%). `null` numbers render as an em dash. Do not add balances, account IDs, API keys, or other identifying fields. The repository is public.
+Every `*_pct` field is already in percent points (`1.0` = 1%). `null` numbers render as an em dash. Do not add the account balance, equity, account IDs, or API keys. The repository is public, so anything in this file can be read even if the page does not display it.
+
+The page sums closed-trade `pnl_usd` into realized profit and loss, and open-position `unrealized_usd` into open profit and loss. Percent and R are shown beside those amounts. The open percent is `unrealized_r` × `risk_pct`, since one R is that position's risk.
 
 ### `equity_curve` items
 
@@ -75,11 +78,12 @@ Every `*_pct` field is already in percent points (`1.0` = 1%). `null` numbers re
   "targets": [63980.0, 64420.0],
   "risk_pct": 0.35,
   "last_price": 63690.2,
-  "unrealized_r": 0.35
+  "unrealized_r": 0.35,
+  "unrealized_usd": 5.25
 }
 ```
 
-Prices are market prices. `risk_pct` is the position risk in percent points. `unrealized_r` is the open result in R.
+Prices are market prices. `risk_pct` is the position risk in percent points. `unrealized_r` is the open result in R. `unrealized_usd` is the open profit or loss in USDC.
 
 ### `closed_trades` items
 
@@ -95,11 +99,12 @@ Prices are market prices. `risk_pct` is the position risk in percent points. `un
   "exit": 63410.0,
   "r": 1.52,
   "pnl_pct": 0.48,
+  "pnl_usd": 6.4,
   "exit_reason": "T1"
 }
 ```
 
-`r` is the realized R multiple. `pnl_pct` is the trade's contribution in percent points. `exit_reason` is a short label such as `T1` or `stop`.
+`r` is the realized R multiple. `pnl_pct` is the trade's result in percent points. `pnl_usd` is that same result in USDC. `exit_reason` is a short label such as `T1` or `stop`.
 
 ### `strategies` items
 
