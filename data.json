@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-07T08:27:08+08:00",
+  "updated": "2026-10-07T13:50:53+08:00",
   "stats": {
     "trades": 0,
     "wins": 0,
@@ -13,7 +13,7 @@
   "today": {
     "date": "2026-10-07",
     "pnl_usd": 0.0,
-    "trades_taken": 0
+    "trades_taken": 1
   },
   "equity_curve": [
     {
@@ -21,9 +21,35 @@
       "pnl_usd": 0.0
     }
   ],
-  "open_positions": [],
+  "open_positions": [
+    {
+      "id": "rs_rw-069c924ee6",
+      "symbol": "PF_SOLUSD",
+      "side": "BUY",
+      "strategy": "rs_rw (long-strong 15m)",
+      "opened": "2026-10-07T13:48:39+08:00",
+      "entry": 118.74,
+      "stop": 118.52,
+      "targets": [
+        119.85,
+        120.12
+      ],
+      "last_price": null,
+      "unrealized_r": null,
+      "unrealized_usd": null
+    }
+  ],
   "closed_trades": [],
-  "strategies": [],
+  "strategies": [
+    {
+      "name": "rs_rw (long-strong 15m)",
+      "trades": 0,
+      "win_rate": null,
+      "avg_r": null,
+      "profit_factor": null,
+      "status": "live"
+    }
+  ],
   "paper": {
     "in_window": {
       "trades": 0,
