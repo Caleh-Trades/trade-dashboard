@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-07T14:25:20+08:00",
+  "updated": "2026-10-07T15:25:36+08:00",
   "stats": {
     "trades": 1,
     "wins": 0,
@@ -13,7 +13,7 @@
   "today": {
     "date": "2026-10-07",
     "pnl_usd": -0.84,
-    "trades_taken": 1
+    "trades_taken": 2
   },
   "equity_curve": [
     {
@@ -25,7 +25,24 @@
       "pnl_usd": -0.84
     }
   ],
-  "open_positions": [],
+  "open_positions": [
+    {
+      "id": "cvd_at_l-ad32978bd5",
+      "symbol": "PF_SOLUSD",
+      "side": "BUY",
+      "strategy": "cvd_at_level (follow_break at prior 15m low 118.99 area)",
+      "opened": "2026-10-07T15:15:51+08:00",
+      "entry": 118.97,
+      "stop": 118.76,
+      "targets": [
+        120.12,
+        120.32
+      ],
+      "last_price": null,
+      "unrealized_r": null,
+      "unrealized_usd": null
+    }
+  ],
   "closed_trades": [
     {
       "id": "rs_rw-069c924ee6",
@@ -48,6 +65,14 @@
       "win_rate": 0.0,
       "avg_r": -1.09,
       "profit_factor": 0.0,
+      "status": "live"
+    },
+    {
+      "name": "cvd_at_level (follow_break at prior 15m low 118.99 area)",
+      "trades": 0,
+      "win_rate": null,
+      "avg_r": null,
+      "profit_factor": null,
       "status": "live"
     }
   ],
