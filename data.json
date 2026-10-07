@@ -1,18 +1,18 @@
 {
-  "updated": "2026-10-07T15:25:36+08:00",
+  "updated": "2026-10-07T15:56:28+08:00",
   "stats": {
-    "trades": 1,
+    "trades": 2,
     "wins": 0,
-    "losses": 1,
+    "losses": 2,
     "win_rate": 0.0,
     "avg_r": -1.09,
     "profit_factor": 0.0,
-    "total_pnl_usd": -0.84,
-    "max_drawdown_usd": 0.84
+    "total_pnl_usd": -1.59,
+    "max_drawdown_usd": 1.59
   },
   "today": {
     "date": "2026-10-07",
-    "pnl_usd": -0.84,
+    "pnl_usd": -1.59,
     "trades_taken": 2
   },
   "equity_curve": [
@@ -23,26 +23,13 @@
     {
       "t": "2026-10-07T14:06:30+08:00",
       "pnl_usd": -0.84
-    }
-  ],
-  "open_positions": [
+    },
     {
-      "id": "cvd_at_l-ad32978bd5",
-      "symbol": "PF_SOLUSD",
-      "side": "BUY",
-      "strategy": "cvd_at_level (follow_break at prior 15m low 118.99 area)",
-      "opened": "2026-10-07T15:15:51+08:00",
-      "entry": 118.97,
-      "stop": 118.76,
-      "targets": [
-        120.12,
-        120.32
-      ],
-      "last_price": null,
-      "unrealized_r": null,
-      "unrealized_usd": null
+      "t": "2026-10-07T15:24:42+08:00",
+      "pnl_usd": -1.59
     }
   ],
+  "open_positions": [],
   "closed_trades": [
     {
       "id": "rs_rw-069c924ee6",
@@ -56,6 +43,19 @@
       "r": -1.09,
       "pnl_usd": -0.84,
       "exit_reason": "stop hit  14 05 5m bar w"
+    },
+    {
+      "id": "cvd_at_l-ad32978bd5",
+      "symbol": "PF_SOLUSD",
+      "side": "BUY",
+      "strategy": "cvd_at_level (follow_break at prior 15m low 118.99 area)",
+      "opened": "2026-10-07T15:15:51+08:00",
+      "closed": "2026-10-07T15:24:42+08:00",
+      "entry": 118.97,
+      "exit": 118.741,
+      "r": -1.09,
+      "pnl_usd": -0.75,
+      "exit_reason": "reduce only stop at 118"
     }
   ],
   "strategies": [
@@ -69,10 +69,10 @@
     },
     {
       "name": "cvd_at_level (follow_break at prior 15m low 118.99 area)",
-      "trades": 0,
-      "win_rate": null,
-      "avg_r": null,
-      "profit_factor": null,
+      "trades": 1,
+      "win_rate": 0.0,
+      "avg_r": -1.09,
+      "profit_factor": 0.0,
       "status": "live"
     }
   ],
