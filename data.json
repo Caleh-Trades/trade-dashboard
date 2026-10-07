@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-07T15:56:28+08:00",
+  "updated": "2026-10-07T16:26:42+08:00",
   "stats": {
     "trades": 2,
     "wins": 0,
@@ -13,7 +13,7 @@
   "today": {
     "date": "2026-10-07",
     "pnl_usd": -1.59,
-    "trades_taken": 2
+    "trades_taken": 3
   },
   "equity_curve": [
     {
@@ -29,7 +29,24 @@
       "pnl_usd": -1.59
     }
   ],
-  "open_positions": [],
+  "open_positions": [
+    {
+      "id": "cvd_at_l-a5554f246a",
+      "symbol": "PF_ETHUSD",
+      "side": "SELL",
+      "strategy": "cvd_at_level (follow_break at prior 15m low, post-only)",
+      "opened": "2026-10-07T16:22:41+08:00",
+      "entry": 2615.5,
+      "stop": 2621.9,
+      "targets": [
+        2604.3,
+        2602.9
+      ],
+      "last_price": null,
+      "unrealized_r": null,
+      "unrealized_usd": null
+    }
+  ],
   "closed_trades": [
     {
       "id": "rs_rw-069c924ee6",
@@ -73,6 +90,14 @@
       "win_rate": 0.0,
       "avg_r": -1.09,
       "profit_factor": 0.0,
+      "status": "live"
+    },
+    {
+      "name": "cvd_at_level (follow_break at prior 15m low, post-only)",
+      "trades": 0,
+      "win_rate": null,
+      "avg_r": null,
+      "profit_factor": null,
       "status": "live"
     }
   ],
