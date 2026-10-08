@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-08T08:21:04+08:00",
+  "updated": "2026-10-08T15:21:25+08:00",
   "stats": {
     "trades": 3,
     "wins": 1,
@@ -13,7 +13,7 @@
   "today": {
     "date": "2026-10-08",
     "pnl_usd": 0.0,
-    "trades_taken": 0
+    "trades_taken": 1
   },
   "equity_curve": [
     {
@@ -33,7 +33,24 @@
       "pnl_usd": -0.59
     }
   ],
-  "open_positions": [],
+  "open_positions": [
+    {
+      "id": "rs_rw-759f7fc51a",
+      "symbol": "PF_LINKUSD",
+      "side": "SELL",
+      "strategy": "rs_rw (short-weak 15m VWAP-pullback maker)",
+      "opened": "2026-10-08T15:17:36+08:00",
+      "entry": 13.143,
+      "stop": 13.189,
+      "targets": [
+        13.065,
+        12.956
+      ],
+      "last_price": null,
+      "unrealized_r": null,
+      "unrealized_usd": null
+    }
+  ],
   "closed_trades": [
     {
       "id": "rs_rw-069c924ee6",
@@ -97,6 +114,14 @@
       "trades": 1,
       "win_rate": 100.0,
       "avg_r": 3.18,
+      "profit_factor": null,
+      "status": "live"
+    },
+    {
+      "name": "rs_rw (short-weak 15m VWAP-pullback maker)",
+      "trades": 0,
+      "win_rate": null,
+      "avg_r": null,
       "profit_factor": null,
       "status": "live"
     }
