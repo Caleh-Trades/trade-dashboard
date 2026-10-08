@@ -1,18 +1,18 @@
 {
-  "updated": "2026-10-08T15:21:25+08:00",
+  "updated": "2026-10-08T15:54:09+08:00",
   "stats": {
-    "trades": 3,
+    "trades": 4,
     "wins": 1,
-    "losses": 2,
-    "win_rate": 33.3,
-    "avg_r": 0.33,
-    "profit_factor": 1.46,
-    "total_pnl_usd": -0.59,
+    "losses": 3,
+    "win_rate": 25.0,
+    "avg_r": 0.0,
+    "profit_factor": 1.0,
+    "total_pnl_usd": -1.35,
     "max_drawdown_usd": 1.59
   },
   "today": {
     "date": "2026-10-08",
-    "pnl_usd": 0.0,
+    "pnl_usd": -0.76,
     "trades_taken": 1
   },
   "equity_curve": [
@@ -31,26 +31,13 @@
     {
       "t": "2026-10-07T18:07:36+08:00",
       "pnl_usd": -0.59
-    }
-  ],
-  "open_positions": [
+    },
     {
-      "id": "rs_rw-759f7fc51a",
-      "symbol": "PF_LINKUSD",
-      "side": "SELL",
-      "strategy": "rs_rw (short-weak 15m VWAP-pullback maker)",
-      "opened": "2026-10-08T15:17:36+08:00",
-      "entry": 13.143,
-      "stop": 13.189,
-      "targets": [
-        13.065,
-        12.956
-      ],
-      "last_price": null,
-      "unrealized_r": null,
-      "unrealized_usd": null
+      "t": "2026-10-08T15:23:02+08:00",
+      "pnl_usd": -1.35
     }
   ],
+  "open_positions": [],
   "closed_trades": [
     {
       "id": "rs_rw-069c924ee6",
@@ -90,6 +77,19 @@
       "r": 3.18,
       "pnl_usd": 1.0,
       "exit_reason": "both targets filled as m"
+    },
+    {
+      "id": "rs_rw-759f7fc51a",
+      "symbol": "PF_LINKUSD",
+      "side": "SELL",
+      "strategy": "rs_rw (short-weak 15m VWAP-pullback maker)",
+      "opened": "2026-10-08T15:17:36+08:00",
+      "closed": "2026-10-08T15:23:02+08:00",
+      "entry": 13.143,
+      "exit": 13.189,
+      "r": -1.0,
+      "pnl_usd": -0.76,
+      "exit_reason": "stop hit 15 23 hkt  full"
     }
   ],
   "strategies": [
@@ -119,10 +119,10 @@
     },
     {
       "name": "rs_rw (short-weak 15m VWAP-pullback maker)",
-      "trades": 0,
-      "win_rate": null,
-      "avg_r": null,
-      "profit_factor": null,
+      "trades": 1,
+      "win_rate": 0.0,
+      "avg_r": -1.0,
+      "profit_factor": 0.0,
       "status": "live"
     }
   ],
