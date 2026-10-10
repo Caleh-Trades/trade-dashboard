@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-09T09:19:35+08:00",
+  "updated": "2026-10-11T00:57:48+08:00",
   "stats": {
     "trades": 4,
     "wins": 1,
@@ -11,7 +11,7 @@
     "max_drawdown_usd": 1.59
   },
   "today": {
-    "date": "2026-10-09",
+    "date": "2026-10-11",
     "pnl_usd": 0.0,
     "trades_taken": 0
   },
