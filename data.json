@@ -1,18 +1,18 @@
 {
-  "updated": "2026-10-11T00:57:48+08:00",
+  "updated": "2026-10-15T10:39:28+08:00",
   "stats": {
-    "trades": 4,
+    "trades": 5,
     "wins": 1,
-    "losses": 3,
-    "win_rate": 25.0,
-    "avg_r": 0.0,
-    "profit_factor": 1.0,
-    "total_pnl_usd": -1.35,
-    "max_drawdown_usd": 1.59
+    "losses": 4,
+    "win_rate": 20.0,
+    "avg_r": -0.2,
+    "profit_factor": 0.76,
+    "total_pnl_usd": -2.08,
+    "max_drawdown_usd": 2.08
   },
   "today": {
-    "date": "2026-10-11",
-    "pnl_usd": 0.0,
+    "date": "2026-10-15",
+    "pnl_usd": -0.73,
     "trades_taken": 0
   },
   "equity_curve": [
@@ -35,6 +35,10 @@
     {
       "t": "2026-10-08T15:23:02+08:00",
       "pnl_usd": -1.35
+    },
+    {
+      "t": "2026-10-15T10:23:52+08:00",
+      "pnl_usd": -2.08
     }
   ],
   "open_positions": [],
@@ -90,6 +94,19 @@
       "r": -1.0,
       "pnl_usd": -0.76,
       "exit_reason": "stop hit 15 23 hkt  full"
+    },
+    {
+      "id": "dta1201_macd_1791864084",
+      "symbol": "PF_XBTUSD",
+      "side": "BUY",
+      "strategy": "macd (legacy path)",
+      "opened": "2026-10-13T12:01:27+08:00",
+      "closed": "2026-10-15T10:23:52+08:00",
+      "entry": 83279.0,
+      "exit": 80900.33333333,
+      "r": -1.01,
+      "pnl_usd": -0.73,
+      "exit_reason": "closed"
     }
   ],
   "strategies": [
@@ -122,6 +139,14 @@
       "trades": 1,
       "win_rate": 0.0,
       "avg_r": -1.0,
+      "profit_factor": 0.0,
+      "status": "live"
+    },
+    {
+      "name": "macd (legacy path)",
+      "trades": 1,
+      "win_rate": 0.0,
+      "avg_r": -1.01,
       "profit_factor": 0.0,
       "status": "live"
     }
